@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Posts</title>
+    <style>
+      body {
+        padding: 50px;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .w-full {
+        width: 100%;
+      }
+      th {
+        text-align: left;
+      }
+      td {
+        border-bottom: 1px solid #ddd;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="w-full header">
+      <form method="get" action="{% url 'search_posts' %}">
+        <input
+          type="text"
+          name="q"
+          value="{{query}}"
+          placeholder="Search posts..."
+        />
+        <button type="submit">Search</button>
+      </form>
+      <div>
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'create_post' %}">Create Post</a>
+            <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+        {% endif %}
+      </div>
+      
+    </div>
+    <div class="w-full">
+      {% if query %}
+      <h2>Filtered Blog Posts</h2>
+      {% else %}
+      <h2>All Blog Posts</h2>
+      {% endif %}
+      <table style="width:100%">
+        <tr>
+          <th style="width:15%">title</th>
+          <th style="width:40%">content</th>
+          <th style="width:15%">date</th>
+          <th style="width:15%">Author</th>
+          <th style="width:15%">Actions</th>
+        </tr>
+        {% for post in blog_posts %}
+        <tr>
+          <td>
+            <h3>{{ post.title }}</h3>
+          </td>
+          <td>
+            <p>{{ post.content }}</p>
+          </td>
+          <td>
+            <p>Publication Date: {{ post.publication_date }}</p>
+          </td>
+          <td>
+            <p>{{ post.author.username }}</p>
+          </td>
+          <td>
+            {% if user == post.author %}
+            <button>
+                <a href="{% url 'edit_post' post.id %}">Edit</a>
+            </button>
+            <button id="delete-post-btn" onclick="deletePost({{ post.id }})">Delete</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <p>No blog posts available.</p>
+        {% endfor %}
+      </table>
+
+      
+
+      <!-- Pagination links -->
+      <div class="pagination">
+        <span class="step-links">
+          {% if blog_posts.has_previous %}
+          <a href="?page=1">&laquo; First</a>
+          <a href="?page={{ blog_posts.previous_page_number }}">Previous</a>
+          {% endif %}
+          <span class="current">
+            Page {{ blog_posts.number }} of {{ blog_posts.paginator.num_pages}}.
+          </span>
+
+          {% if blog_posts.has_next %}
+          <a href="?page={{ blog_posts.next_page_number }}">Next</a>
+          <a href="?page={{ blog_posts.paginator.num_pages }}">Last &raquo;</a>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+    function deletePost(id){
+        const csrftoken = getCookie("csrftoken");
+        console.log(id, csrftoken)
+        let url = window.location.origin + '/api/posts/' + id + '/delete/';
+        let requestOptions = {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrftoken,
+            }
+          };
+        fetch(url, requestOptions).then(() => {
+            console.log('Post deleted successfully');
+            location.reload()
+        }).catch((error) => {
+            console.error('Error deleting post:', error);
+        })
+
+    }
+</script>
