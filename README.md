@@ -26,7 +26,7 @@ To set up this project locally using Docker, follow these steps:
 1. **Clone the repository**:
     ```shell
     git clone [repository-url]
-    cd vendor-management-system
+    cd blog
     ```
 
 2. **Build the Docker images**:
